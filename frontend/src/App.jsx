@@ -20,7 +20,7 @@ function App() {
       </SignedIn>
 
 
-      {/* User profile button */}
+      {/* User profile button */} // shows user avatar and a dropdown menu  
       
       <UserButton />
     </>
