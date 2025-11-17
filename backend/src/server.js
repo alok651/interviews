@@ -25,14 +25,15 @@ app.get('/about', (req, res) => {
 
 // make our app ready for deployment
 
-if(ENV.NODE_ENV === 'production'){
-    app.use(express.static(path.join(__dirname,'../frontend /dist')));
+if (ENV.NODE_ENV === 'production') {
+    // 1. Serve static files
+    app.use(express.static(path.join(__dirname, '../frontend/dist')));
 
+    // 2. Catch-all for SPA
     app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
-});
-
-    }
+        res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+    });
+}
 
 const startServer = async () => {
     try {
