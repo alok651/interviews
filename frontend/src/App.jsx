@@ -10,7 +10,7 @@ function App() {
 
       <SignedOut>
         <SignInButton mode='modal' >
-          <button className='abc'>Sign In/Sign up</button>
+          <button className='abc'>Login</button>
         </SignInButton>
       </SignedOut>
 
