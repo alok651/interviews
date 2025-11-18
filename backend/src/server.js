@@ -2,8 +2,9 @@ import express from 'express';
 import path from 'path';
 import {ENV} from './lib/env.js';
 import { connectDB } from "./lib/db.js";
-
-
+import cors from 'cors';
+import {serve} from "inngest/express";
+import { inngest } from './lib/inngest.js';
 
 const app = express();
 
@@ -13,13 +14,20 @@ const app = express();
 
 const __dirname = path.resolve();
 
+//middlewares
+app.use(express.json());
+//credentials middleware for cors handling cookies 
+app.use(cors({ origin: ENV.CLIENT_URL, credentials: true }));    
 
-app.get('/', (req, res) => {
+app.use("/api/inngst", serve({ client: inngest ,functions}));
+
+
+app.get('/health', (req, res) => {
     res.status(200).json({msg: 'api is working'});
 });
 
-app.get('/about', (req, res) => {
-    res.status(200).json({msg: 'about api is working'});
+app.get('/books', (req, res) => {
+    res.status(200).json({msg: 'This is books api working'});
 });
 
 
