@@ -1,56 +1,67 @@
-// backend/src/server.js
-
-import express from 'express';
-import path from 'path';
-import { ENV } from './lib/env.js';
+import express from "express";
+import path from "path";
+import { ENV } from "./lib/env.js";
 import { connectDB } from "./lib/db.js";
-import cors from 'cors';
+import cors from "cors";
 import { serve } from "inngest/express";
-import { inngestClient, functions } from './lib/inngest.js';  // ✅ fixed import
+import { inngest, functions } from "./lib/inngest.js";
 
 const app = express();
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
+const __dirname = path.resolve();
 
 // Middlewares
 app.use(express.json());
-app.use(cors({ origin: ENV.CLIENT_URL, credentials: true }));
+app.use(
+  cors({
+    origin: ENV.CLIENT_URL,
+    credentials: true,
+  })
+);
 
-// Inngest (define functions before using)
-app.use("/api/inngst", serve({ client: inngestClient, functions })); // ✅ fixed client
+// Inngest route
+app.use("/api/inngest", serve({ client: inngest, functions }));
 
-// Health route
+// Simple routes
+app.get("/", (req, res) => {
+  res.json({ msg: "api is working" });
+});
+
+app.get("/about", (req, res) => {
+  res.json({ msg: "about api is working" });
+});
+
 app.get('/health', (req, res) => {
-    res.status(200).json({ msg: 'API is working' });
+  res.status(200).send({ success: true });
 });
 
-// Example route
-app.get('/books', (req, res) => {
-    res.status(200).json({ msg: 'This is books API working' });
-});
 
-// Production frontend
-if (ENV.NODE_ENV === 'production') {
-    app.use(express.static(path.join(__dirname, '../frontend/dist')));
+// ===============================
+// 🚀 PRODUCTION — SERVE FRONTEND
+// ===============================
+if (ENV.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
-    app.get('*', (req, res) => {
-        res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
-    });
+  app.get("/{*any}", (req, res) => {
+    res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
+  });
 }
 
-// Start server
-const startServer = async () => {
-    try {
-        await connectDB();
 
-        const PORT = process.env.PORT || ENV.PORT || 3000;
+// ===============================
+// 🚀 START SERVER
+// ===============================
+const start = async () => {
+  try {
+    await connectDB();
 
-        app.listen(PORT, () => {
-            console.log('Server running on', PORT);
-        });
+    const PORT = process.env.PORT || ENV.PORT || 3000;
 
-    } catch (error) {
-        console.error('Error starting server:', error);
-    }
+    app.listen(PORT, () => {
+      console.log("Server running on:", PORT);
+    });
+  } catch (err) {
+    console.error("Server start error:", err);
+  }
 };
 
-startServer();
+start();
