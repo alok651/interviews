@@ -1,45 +1,41 @@
-import { Inngest } from "inngest";
+// import the class, not the instance
+import { Inngest } from "inngest";  
 import { connectDB } from "./db.js";
 import User from "../models/User.js";
-import { deleteStreamUser, upsertStreamUser } from "./stream.js";
 
-export const inngest = new Inngest({ id: "talent-iq" });
+// rename your instance to avoid conflict
+export const inngestClient = new Inngest({ id: "interviews" });
 
-const syncUser = inngest.createFunction(
+const syncUser = inngestClient.createFunction(
   { id: "sync-user" },
-  { event: "clerk/user.created" },
+  { events: "clerk/user.created" },
   async ({ event }) => {
     await connectDB();
 
-    const { id, email_addresses, first_name, last_name, image_url } = event.data;
+    const { id, email_address, first_name, last_name, image_url } = event.data;
 
     const newUser = {
       clerkId: id,
-      email: email_addresses[0]?.email_address,
-      name: `${first_name || ""} ${last_name || ""}`,
-      profileImage: image_url,
+      email: email_address[0]?.email_address,
+      name: `${first_name} ${last_name}`,
+      profileImage: image_url
     };
 
     await User.create(newUser);
-
-    await upsertStreamUser({
-      id: newUser.clerkId.toString(),
-      name: newUser.name,
-      image: newUser.profileImage,
-    });
+    // todo: do something
   }
 );
 
-const deleteUserFromDB = inngest.createFunction(
+const deleteUserFromDB = inngestClient.createFunction(
   { id: "delete-user-from-db" },
-  { event: "clerk/user.deleted" },
+  { events: "clerk/user.deleted" },
   async ({ event }) => {
     await connectDB();
 
     const { id } = event.data;
     await User.deleteOne({ clerkId: id });
 
-    await deleteStreamUser(id.toString());
+    // todo: do something else
   }
 );
 
