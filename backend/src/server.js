@@ -1,50 +1,67 @@
 import express from "express";
 import path from "path";
-import { fileURLToPath } from "url";
 import { ENV } from "./lib/env.js";
 import { connectDB } from "./lib/db.js";
 import cors from "cors";
 import { serve } from "inngest/express";
-import { inngestClient, functions } from "./lib/inngest.js";
+import { inngest, functions } from "./lib/inngest.js";
 
 const app = express();
-
-// ESM dirname fix
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname = path.resolve();
 
 // Middlewares
 app.use(express.json());
-app.use(cors({ origin: ENV.CLIENT_URL, credentials: true }));
+app.use(
+  cors({
+    origin: ENV.CLIENT_URL,
+    credentials: true,
+  })
+);
 
-// Inngest endpoint
-app.use("/api/inngest", serve({ client: inngestClient, functions }));
+// Inngest route
+app.use("/api/inngest", serve({ client: inngest, functions }));
 
-// Test routes
-app.get("/health", (req, res) => res.json({ msg: "API is working" }));
-app.get("/books", (req, res) => res.json({ msg: "Books API working" }));
-
-// Production serve
-if (ENV.NODE_ENV === "production") {
-  const frontendPath = path.join(__dirname, "../frontend/dist");
-  app.use(express.static(frontendPath));
-
-  // LAST route only
- app.get("/*", (req, res) => {
-  res.sendFile(path.join(frontendPath, "index.html"));
+// Simple routes
+app.get("/", (req, res) => {
+  res.json({ msg: "api is working" });
 });
 
+app.get("/about", (req, res) => {
+  res.json({ msg: "about api is working" });
+});
+
+app.get('/health', (req, res) => {
+  res.status(200).send({ success: true });
+});
+
+
+// ===============================
+// 🚀 PRODUCTION — SERVE FRONTEND
+// ===============================
+if (ENV.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+
+  app.get("/{*any}", (req, res) => {
+    res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
+  });
 }
 
-// Start server
-const startServer = async () => {
+
+// ===============================
+// 🚀 START SERVER
+// ===============================
+const start = async () => {
   try {
     await connectDB();
-    const PORT = ENV.PORT || 3000;
-    app.listen(PORT, () => console.log("Server running on", PORT));
+
+    const PORT = process.env.PORT || ENV.PORT || 3000;
+
+    app.listen(PORT, () => {
+      console.log("Server running on:", PORT);
+    });
   } catch (err) {
-    console.error(err);
-  }
+    console.error("Server start error:", err);
+  }
 };
 
-startServer();
+start();
