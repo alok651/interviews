@@ -1,11 +1,12 @@
-// import the class, not the instance
+// 1. First import everything
 import { Inngest } from "inngest";  
 import { connectDB } from "./db.js";
 import User from "../models/User.js";
 
-// rename your instance to avoid conflict
+// 2. Create instance with a unique name
 export const inngestClient = new Inngest({ id: "interviews" });
 
+// 3. Create functions using the instance
 const syncUser = inngestClient.createFunction(
   { id: "sync-user" },
   { events: "clerk/user.created" },
@@ -22,7 +23,6 @@ const syncUser = inngestClient.createFunction(
     };
 
     await User.create(newUser);
-    // todo: do something
   }
 );
 
@@ -34,9 +34,8 @@ const deleteUserFromDB = inngestClient.createFunction(
 
     const { id } = event.data;
     await User.deleteOne({ clerkId: id });
-
-    // todo: do something else
   }
 );
 
+// 4. Export functions array
 export const functions = [syncUser, deleteUserFromDB];
